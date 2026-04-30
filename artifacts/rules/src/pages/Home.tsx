@@ -66,12 +66,18 @@ export default function Home() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setActiveSection(entry.target.id);
-            
-            // Scroll active pill into view
+
             if (navRef.current) {
-              const activeBtn = navRef.current.querySelector(`[data-section="${entry.target.id}"]`);
+              const container = navRef.current;
+              const activeBtn = container.querySelector<HTMLElement>(
+                `[data-section="${entry.target.id}"]`
+              );
               if (activeBtn) {
-                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const target =
+                  activeBtn.offsetLeft -
+                  container.clientWidth / 2 +
+                  activeBtn.clientWidth / 2;
+                container.scrollTo({ left: target, behavior: "smooth" });
               }
             }
           }
