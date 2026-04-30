@@ -5,9 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
 
 export interface AppealRequest {
   /**
@@ -52,15 +49,4 @@ export interface AppealRequest {
    * @maxLength 5000
    */
   message: string;
-}
-
-export interface AppealResponse {
-  ok: boolean;
-  chatId: string;
-  forwardedAt: string;
-}
-
-export interface ErrorResponse {
-  error: string;
-  details?: string;
 }

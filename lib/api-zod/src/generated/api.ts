@@ -14,3 +14,68 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Forwards a player appeal to the configured Zapier webhook for AI
+processing and delivery to Telegram or Discord.
+
+ * @summary Submit a player appeal
+ */
+export const submitAppealBodyChatIdMax = 200;
+
+export const submitAppealBodyTitleMax = 200;
+
+export const submitAppealBodyNicknameMax = 100;
+
+export const submitAppealBodyFactionMax = 100;
+
+export const submitAppealBodyContactMax = 200;
+
+export const submitAppealBodyCategoryMax = 100;
+
+export const submitAppealBodyMessageMin = 5;
+export const submitAppealBodyMessageMax = 5000;
+
+export const SubmitAppealBody = zod.object({
+  chatId: zod
+    .string()
+    .min(1)
+    .max(submitAppealBodyChatIdMax)
+    .describe("Local id of the appeal (chat) on the client"),
+  title: zod
+    .string()
+    .min(1)
+    .max(submitAppealBodyTitleMax)
+    .describe("Display title of the appeal"),
+  nickname: zod
+    .string()
+    .min(1)
+    .max(submitAppealBodyNicknameMax)
+    .describe("In-game nickname of the player"),
+  faction: zod
+    .string()
+    .min(1)
+    .max(submitAppealBodyFactionMax)
+    .describe("Faction the player belongs to"),
+  contact: zod
+    .string()
+    .min(1)
+    .max(submitAppealBodyContactMax)
+    .describe("Telegram or Discord handle for the reply"),
+  category: zod
+    .string()
+    .min(1)
+    .max(submitAppealBodyCategoryMax)
+    .describe("Category of the appeal (e.g. жалоба, предложение)"),
+  message: zod
+    .string()
+    .min(submitAppealBodyMessageMin)
+    .max(submitAppealBodyMessageMax)
+    .describe("Body of the appeal"),
+});
+
+export const SubmitAppealResponse = zod.object({
+  ok: zod.boolean(),
+  chatId: zod.string(),
+  forwardedAt: zod.coerce.date(),
+});

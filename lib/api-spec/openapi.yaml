@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: appeals
+    description: Player appeals (обращения)
 paths:
   /healthz:
     get:
@@ -24,6 +26,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /appeals:
+    post:
+      operationId: submitAppeal
+      tags: [appeals]
+      summary: Submit a player appeal
+      description: |
+        Forwards a player appeal to the configured Zapier webhook for AI
+        processing and delivery to Telegram or Discord.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppealRequest"
+      responses:
+        "200":
+          description: Accepted and forwarded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppealResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Forwarding failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Webhook is not configured on the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +74,72 @@ components:
           type: string
       required:
         - status
-
+    AppealRequest:
+      type: object
+      properties:
+        chatId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Local id of the appeal (chat) on the client
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display title of the appeal
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: In-game nickname of the player
+        faction:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Faction the player belongs to
+        contact:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Telegram or Discord handle for the reply
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Category of the appeal (e.g. жалоба, предложение)
+        message:
+          type: string
+          minLength: 5
+          maxLength: 5000
+          description: Body of the appeal
+      required:
+        - chatId
+        - title
+        - nickname
+        - faction
+        - contact
+        - category
+        - message
+    AppealResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        chatId:
+          type: string
+        forwardedAt:
+          type: string
+          format: date-time
+      required:
+        - ok
+        - chatId
+        - forwardedAt
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+      required:
+        - error

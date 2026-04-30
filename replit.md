@@ -25,3 +25,23 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Artifacts
+
+- `artifacts/rules` — Russian-language rules website for a Garry's Mod Balkan
+  Conflict RP server, styled like Google Gemini. Routes:
+  - `/` — Home with the rule sections, ranks, and document templates
+  - `/chat/:id` — Standalone page for a player appeal (обращение). The form
+    submits to `POST /api/appeals`, which forwards to the
+    `ZAPIER_WEBHOOK_URL` for AI processing and Telegram/Discord delivery.
+  - Chats and settings are stored in `localStorage` via the `useChats` and
+    `useSettings` hooks.
+- `artifacts/api-server` — Express API server. Routes are added under
+  `src/routes/` and registered in `src/routes/index.ts`. The OpenAPI spec at
+  `lib/api-spec/openapi.yaml` is the source of truth — run codegen after any
+  change.
+
+## Required Secrets
+
+- `ZAPIER_WEBHOOK_URL` — Zapier "Catch Hook" URL that receives forwarded
+  appeals from `POST /api/appeals`.

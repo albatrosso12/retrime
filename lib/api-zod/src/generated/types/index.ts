@@ -6,4 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./appealRequest";
+export * from "./appealResponse";
+export * from "./errorResponse";
 export * from "./healthStatus";

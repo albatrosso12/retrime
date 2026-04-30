@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AppealRequest,
+  AppealResponse,
+  ErrorResponse,
+  HealthStatus,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,92 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Forwards a player appeal to the configured Zapier webhook for AI
+processing and delivery to Telegram or Discord.
+
+ * @summary Submit a player appeal
+ */
+export const getSubmitAppealUrl = () => {
+  return `/api/appeals`;
+};
+
+export const submitAppeal = async (
+  appealRequest: AppealRequest,
+  options?: RequestInit,
+): Promise<AppealResponse> => {
+  return customFetch<AppealResponse>(getSubmitAppealUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(appealRequest),
+  });
+};
+
+export const getSubmitAppealMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitAppeal>>,
+    TError,
+    { data: BodyType<AppealRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitAppeal>>,
+  TError,
+  { data: BodyType<AppealRequest> },
+  TContext
+> => {
+  const mutationKey = ["submitAppeal"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitAppeal>>,
+    { data: BodyType<AppealRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitAppeal(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitAppealMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitAppeal>>
+>;
+export type SubmitAppealMutationBody = BodyType<AppealRequest>;
+export type SubmitAppealMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Submit a player appeal
+ */
+export const useSubmitAppeal = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitAppeal>>,
+    TError,
+    { data: BodyType<AppealRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitAppeal>>,
+  TError,
+  { data: BodyType<AppealRequest> },
+  TContext
+> => {
+  return useMutation(getSubmitAppealMutationOptions(options));
+};
