@@ -3,4 +3,4 @@ compatibility_date = "2024-03-20"
 pages_build_output_dir = "./dist/public"
 
 [vars]
-ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/123456/abcdef/"
+ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/27410332/uva81ym/"
