@@ -5,6 +5,6 @@ import appealsRouter from "./appeals";
 const router: IRouter = Router();
 
 router.use(healthRouter);
-router.use(appealsRouter);
+router.use("/api", appealsRouter);
 
 export default router;
