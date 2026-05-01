@@ -1,6 +1,8 @@
 {
   "name": "zapier-proxy-worker",
   "version": "1.0.0",
-  "type": "module"
-
+  "type": "module",
+  "scripts": {
+    "build": "echo 'No build step required for Cloudflare Worker'"
+  }
 }
