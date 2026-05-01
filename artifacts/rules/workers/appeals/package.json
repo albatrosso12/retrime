@@ -1,0 +1,27 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm --filter artifacts/rules build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "deploy": "cd artifacts/rules && npx wrangler pages deploy ./dist/public"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "eslint": "^10.3.0",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.3",
+    "wrangler": "^4.87.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0",
+      "esbuild": "0.27.3"
+    }
+  }
+}
