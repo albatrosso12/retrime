@@ -3,6 +3,7 @@ import { SubmitAppealBody, SubmitAppealResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
+router.options("/appeals", (req, res) => res.sendStatus(200));
 router.post("/appeals", async (req, res) => {
   const webhook = process.env.ZAPIER_WEBHOOK_URL;
   if (!webhook) {
