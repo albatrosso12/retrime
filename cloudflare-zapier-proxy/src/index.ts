@@ -1,12 +1,14 @@
-// Cloudflare Worker: forwards incoming requests to a Zapier Webhook URL.
+// Cloudflare Worker (modules format): forwards requests to a Zapier Webhook URL.
 // Usage: call the deployed Worker with a query parameter zap_url (e.g. ?zap_url=https://hooks.zapier.com/hooks/c/...)
 // If zap_url is not provided, the Worker responds with 400.
 
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
-});
+export default {
+  async fetch(request: Request): Promise<Response> {
+    return handleRequest(request);
+  }
+};
 
-async function handleRequest(request) {
+async function handleRequest(request: Request): Promise<Response> {
   // Extract Zapier URL from query parameter zap_url or fall back to env binding if provided (not required here)
   const zapUrl = getZapUrlFromRequest(request);
   if (!zapUrl) {
@@ -16,7 +18,7 @@ async function handleRequest(request) {
 
   try {
     // Forward the incoming request to Zapier
-    const forwardInit = {
+    const forwardInit: RequestInit = {
       method: request.method,
       headers: new Headers(request.headers),
       // Forward body for non-GET/HEAD requests
@@ -31,7 +33,7 @@ async function handleRequest(request) {
     const zapResp = await fetch(zapUrl, forwardInit);
     // Return Zapier's response as-is
     return zapResp;
-  } catch (err) {
+  } catch (err: any) {
     return new Response('Error forwarding to Zapier: ' + String(err.message || err), {
       status: 500,
       headers: { 'Content-Type': 'text/plain' }
@@ -39,7 +41,7 @@ async function handleRequest(request) {
   }
 }
 
-function getZapUrlFromRequest(request) {
+function getZapUrlFromRequest(request: Request): string | null {
   try {
     const url = new URL(request.url);
     // Accept zap_url as query parameter; you can also wire env vars later if needed

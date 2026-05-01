@@ -1,4 +1,4 @@
 name = "zapier-proxy"
 
-# Entry point for the worker. No custom build step required; uses src/index.js as the source.
-main = "src/index.js"
+# Entry point for the worker. No custom build step required; uses src/index.ts as the source.
+main = "src/index.ts"
