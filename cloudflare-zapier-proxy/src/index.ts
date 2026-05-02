@@ -327,11 +327,11 @@ export default {
       return handleDiscordCallback(request, env);
     }
 
-    if (path === '/auth/me' && request.method === 'GET') {
+    if ((path === '/auth/me' || path === '/api/auth/me') && request.method === 'GET') {
       return handleGetMe(request, env);
     }
 
-    if (path === '/auth/logout' && request.method === 'POST') {
+    if ((path === '/auth/logout' || path === '/api/auth/logout') && request.method === 'POST') {
       return handleLogout();
     }
 
