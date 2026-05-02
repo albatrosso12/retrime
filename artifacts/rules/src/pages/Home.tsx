@@ -1,22 +1,23 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ruleSections, ranks } from "../data/rules";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Shield, Users, Scroll } from "lucide-react";
 import { Sidebar, MobileMenuTrigger } from "@/components/Sidebar";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { useChats } from "@/hooks/useChats";
 import { useSettings } from "@/hooks/useSettings";
 
 const factions = [
-  "Гражданские",
-  "Сербская Армия",
-  "НАТО / Канадцы",
-  "Армия РФ",
+  { name: "Гражданские", icon: Users, color: "from-gray-500 to-gray-600" },
+  { name: "Сербская Армия", icon: Shield, color: "from-red-500 to-red-600" },
+  { name: "НАТО / Канадцы", icon: Shield, color: "from-blue-500 to-blue-600" },
+  { name: "Армия РФ", icon: Shield, color: "from-amber-500 to-amber-600" },
 ];
 
 const documents = [
   {
     title: "ШАБЛОН РАПОРТА",
+    icon: FileText,
     content: `КОМУ: Командиру подразделения
 ОТ КОГО: [Звание] [Фамилия]
 ДАТА: ДД.ММ.ГГГГ
@@ -28,6 +29,7 @@ const documents = [
   },
   {
     title: "ШАБЛОН ПРИКАЗА",
+    icon: Scroll,
     content: `ПРИКАЗ № ___
 ОТ: [Должность, Звание]
 ДАТА: ДД.ММ.ГГГГ
@@ -41,6 +43,7 @@ const documents = [
   },
   {
     title: "ПРОТОКОЛ ЗАДЕРЖАНИЯ",
+    icon: Shield,
     content: `ПРОТОКОЛ № ___
 ОТ КОГО: Патрульный [Звание]
 ДАТА: ДД.ММ.ГГГГ
@@ -108,17 +111,11 @@ export default function Home() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setActiveSection(entry.target.id);
-
             if (navRef.current) {
               const container = navRef.current;
-              const activeBtn = container.querySelector<HTMLElement>(
-                `[data-section="${entry.target.id}"]`,
-              );
+              const activeBtn = container.querySelector<HTMLElement>(`[data-section="${entry.target.id}"]`);
               if (activeBtn) {
-                const target =
-                  activeBtn.offsetLeft -
-                  container.clientWidth / 2 +
-                  activeBtn.clientWidth / 2;
+                const target = activeBtn.offsetLeft - container.clientWidth / 2 + activeBtn.clientWidth / 2;
                 container.scrollTo({ left: target, behavior: "smooth" });
               }
             }
@@ -130,7 +127,6 @@ export default function Home() {
 
     const sections = document.querySelectorAll("section[id]");
     sections.forEach((section) => observer.observe(section));
-
     return () => sections.forEach((section) => observer.unobserve(section));
   }, []);
 
@@ -144,19 +140,23 @@ export default function Home() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0, y: 15 },
     visible: { opacity: 1, y: 0 },
   };
 
   return (
-    <div className="min-h-screen bg-[#131314] text-[#E3E3E3] flex font-sans selection:bg-[#8AB4F8] selection:text-[#131314]">
+    <div className="min-h-screen bg-[#0A0A0C] text-[#E8EAED] flex font-sans selection:bg-[#8AB4F8]/30 selection:text-[#E8EAED]">
+      {/* Animated background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#8AB4F8]/8 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#6B9DFC]/6 rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#8AB4F8]/3 rounded-full blur-[150px]" />
+      </div>
+
       <Sidebar
         expanded={sidebarExpanded}
         setExpanded={setSidebarExpanded}
@@ -165,72 +165,99 @@ export default function Home() {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-[#131314]">
-        <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-[#131314]/90 backdrop-blur">
-          <div className="flex items-center gap-3">
+      <div className="flex-1 flex flex-col min-w-0 bg-transparent relative z-10">
+        <header className="sticky top-0 z-30 flex items-center justify-between p-5 bg-[#0A0A0C]/80 backdrop-blur-xl border-b border-[#1F1F23]">
+          <div className="flex items-center gap-4">
             <MobileMenuTrigger onClick={() => setIsMobileMenuOpen(true)} />
-            <span className="text-[#E3E3E3] text-xl font-medium tracking-tight flex items-center gap-2">
-              <img
-                src={`${import.meta.env.BASE_URL}logo.jpg`}
-                alt="Logo"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              Балканский Конфликт
-            </span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8AB4F8] to-[#5B8DEE] flex items-center justify-center shadow-lg shadow-[#8AB4F8]/20">
+                <img
+                  src={`${import.meta.env.BASE_URL}logo.jpg`}
+                  alt="Logo"
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              </div>
+              <span className="text-lg font-medium text-white tracking-tight">
+                Балканский Конфликт
+              </span>
+            </div>
           </div>
         </header>
 
         <main className="flex-1 overflow-x-hidden">
-          <div className="max-w-[880px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-24 flex flex-col gap-12">
+          <div className="max-w-[900px] mx-auto px-6 md:px-10 py-10 pb-28 flex flex-col gap-14">
+            {/* Hero Section */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex flex-col gap-6 pt-4 pb-8"
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col gap-8 pt-6"
             >
-              <h1 className="text-4xl md:text-5xl font-normal text-[#9AA0A6] tracking-tight">
-                Добро пожаловать
-              </h1>
-              <h2 className="text-5xl md:text-6xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#8AB4F8] to-[#D7E3FC] tracking-tight">
-                Свод правил сервера
-              </h2>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#8AB4F8]/10 border border-[#8AB4F8]/20 w-fit">
+                <span className="w-2 h-2 rounded-full bg-[#8AB4F8] animate-pulse" />
+                <span className="text-sm text-[#8AB4F8] font-medium">Roleplay Server</span>
+              </div>
 
-              <div className="flex flex-wrap gap-2 mt-4">
-                {factions.map((faction) => (
-                  <div
-                    key={faction}
-                    className="px-4 py-2 rounded-full bg-[#1E1F20] text-[#E3E3E3] text-sm font-medium border border-[#444746] select-none"
-                  >
-                    {faction}
-                  </div>
-                ))}
+              <div className="space-y-4">
+                <h1 className="text-5xl md:text-6xl font-normal text-[#9CA3AF] tracking-tight leading-tight">
+                  Добро пожаловать
+                </h1>
+                <h2 className="text-5xl md:text-7xl font-semibold text-white tracking-tight leading-tight">
+                  <span className="bg-gradient-to-r from-[#E8EAED] via-white to-[#9CA3AF] bg-clip-text text-transparent">
+                    Свод правил
+                  </span>
+                  <br />
+                  <span className="bg-gradient-to-r from-[#8AB4F8] to-[#6B9DFC] bg-clip-text text-transparent">
+                    сервера
+                  </span>
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                {factions.map((faction) => {
+                  const Icon = faction.icon;
+                  return (
+                    <motion.div
+                      key={faction.name}
+                      whileHover={{ scale: 1.02 }}
+                      className="group flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#151518] border border-[#2D2D30] hover:border-[#3D3D40] transition-all duration-200 cursor-pointer"
+                    >
+                      <div className={`w-6 h-6 rounded-md bg-gradient-to-br ${faction.color} flex items-center justify-center`}>
+                        <Icon className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-[#E8EAED] group-hover:text-white transition-colors">
+                        {faction.name}
+                      </span>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
 
-            <div className="sticky top-20 z-20 py-2 bg-[#131314]/90 backdrop-blur -mx-4 px-4 md:mx-0 md:px-0">
+            {/* Navigation Pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="sticky top-20 z-20 py-3 bg-[#0A0A0C]/90 backdrop-blur-xl -mx-6 px-6 md:mx-0 md:px-0"
+            >
               <div className="relative">
                 <AnimatePresence>
                   {canScrollLeft && (
                     <motion.button
                       key="left-arrow"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
                       onClick={() => scrollNavBy("left")}
-                      aria-label="Прокрутить влево"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 flex items-center justify-center rounded-full bg-[#282A2C] hover:bg-[#444746] text-[#E3E3E3] shadow-md"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 flex items-center justify-center rounded-xl bg-[#151518] border border-[#2D2D30] hover:border-[#8AB4F8]/50 hover:bg-[#1A1A1D] text-[#6B7280] hover:text-[#8AB4F8] transition-all duration-200 shadow-lg"
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </motion.button>
                   )}
                 </AnimatePresence>
 
-                <div
-                  className={`pointer-events-none absolute left-0 top-0 bottom-2 w-12 bg-gradient-to-r from-[#131314] to-transparent transition-opacity duration-200 ${
-                    canScrollLeft ? "opacity-100" : "opacity-0"
-                  }`}
-                />
+                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0A0A0C] to-transparent z-10" />
 
                 <div
                   ref={navRef}
@@ -239,25 +266,22 @@ export default function Home() {
                     const el = e.currentTarget;
                     const max = el.scrollWidth - el.clientWidth;
                     if (max <= 0) return;
-                    if (
-                      (e.deltaY > 0 && el.scrollLeft < max) ||
-                      (e.deltaY < 0 && el.scrollLeft > 0)
-                    ) {
+                    if ((e.deltaY > 0 && el.scrollLeft < max) || (e.deltaY < 0 && el.scrollLeft > 0)) {
                       e.preventDefault();
                       el.scrollLeft += e.deltaY;
                     }
                   }}
-                  className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1 px-12 scroll-smooth"
+                  className="flex gap-2.5 overflow-x-auto no-scrollbar pb-3 pt-1 px-14 scroll-smooth"
                 >
                   {ruleSections.map((section) => (
                     <button
                       key={section.id}
                       data-section={section.id}
                       onClick={() => scrollTo(section.id)}
-                      className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                      className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                         activeSection === section.id
-                          ? "bg-[#8AB4F8]/10 text-[#8AB4F8]"
-                          : "bg-[#1E1F20] text-[#E3E3E3] hover:bg-[#282A2C]"
+                          ? "bg-gradient-to-r from-[#8AB4F8] to-[#6B9DFC] text-[#0A0A0C] shadow-lg shadow-[#8AB4F8]/25"
+                          : "bg-[#151518] text-[#9CA3AF] hover:bg-[#1A1A1D] hover:text-white border border-[#2D2D30] hover:border-[#3D3D40]"
                       }`}
                     >
                       {section.title}
@@ -266,10 +290,10 @@ export default function Home() {
                   <button
                     data-section="ranks"
                     onClick={() => scrollTo("ranks")}
-                    className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                    className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeSection === "ranks"
-                        ? "bg-[#8AB4F8]/10 text-[#8AB4F8]"
-                        : "bg-[#1E1F20] text-[#E3E3E3] hover:bg-[#282A2C]"
+                        ? "bg-gradient-to-r from-[#8AB4F8] to-[#6B9DFC] text-[#0A0A0C] shadow-lg shadow-[#8AB4F8]/25"
+                        : "bg-[#151518] text-[#9CA3AF] hover:bg-[#1A1A1D] hover:text-white border border-[#2D2D30] hover:border-[#3D3D40]"
                     }`}
                   >
                     Звания
@@ -277,42 +301,37 @@ export default function Home() {
                   <button
                     data-section="documents"
                     onClick={() => scrollTo("documents")}
-                    className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                    className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeSection === "documents"
-                        ? "bg-[#8AB4F8]/10 text-[#8AB4F8]"
-                        : "bg-[#1E1F20] text-[#E3E3E3] hover:bg-[#282A2C]"
-                    }`}
+                        ? "bg-gradient-to-r from-[#8AB4F8] to-[#6B9DFC] text-[#0A0A0C] shadow-lg shadow-[#8AB4F8]/25"
+                        : "bg-[#151518] text-[#9CA3AF] hover:bg-[#1A1A1D] hover:text-white border border-[#2D2D30] hover:border-[#3D3D40]"
+                    }`
                   >
                     Документы
                   </button>
                 </div>
 
-                <div
-                  className={`pointer-events-none absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#131314] to-transparent transition-opacity duration-200 ${
-                    canScrollRight ? "opacity-100" : "opacity-0"
-                  }`}
-                />
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0A0A0C] to-transparent z-10" />
 
                 <AnimatePresence>
                   {canScrollRight && (
                     <motion.button
                       key="right-arrow"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
                       onClick={() => scrollNavBy("right")}
-                      aria-label="Прокрутить вправо"
-                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 flex items-center justify-center rounded-full bg-[#282A2C] hover:bg-[#444746] text-[#E3E3E3] shadow-md"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 flex items-center justify-center rounded-xl bg-[#151518] border border-[#2D2D30] hover:border-[#8AB4F8]/50 hover:bg-[#1A1A1D] text-[#6B7280] hover:text-[#8AB4F8] transition-all duration-200 shadow-lg"
                     >
                       <ChevronRight className="h-5 w-5" />
                     </motion.button>
                   )}
                 </AnimatePresence>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-col gap-10">
+            {/* Rule Sections */}
+            <div className="flex flex-col gap-8">
               {ruleSections.map((section, index) => {
                 const num = String(index + 1).padStart(2, "0");
                 return (
@@ -321,79 +340,88 @@ export default function Home() {
                     id={section.id}
                     initial="hidden"
                     whileInView="visible"
-                    viewport={{ once: true, margin: "-100px" }}
+                    viewport={{ once: true, margin: "-80px" }}
                     variants={containerVariants}
                     className="scroll-mt-36"
                   >
-                    <div className="bg-[#1E1F20] rounded-3xl p-6 md:p-10 shadow-sm border border-[#282A2C]">
+                    <motion.div
+                      variants={itemVariants}
+                      className="bg-[#151518]/60 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-[#2D2D30] hover:border-[#3D3D40] transition-all duration-300 hover:shadow-2xl hover:shadow-[#8AB4F8]/5"
+                    >
                       <div className="mb-8">
-                        <span className="text-sm font-medium text-[#8AB4F8] mb-2 block">
-                          Раздел {num}
-                        </span>
-                        <h2 className="text-2xl md:text-3xl font-medium text-[#E3E3E3] mb-2">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#8AB4F8]/20 to-[#6B9DFC]/10 border border-[#8AB4F8]/30">
+                            <span className="text-[#8AB4F8] font-bold text-lg">{num}</span>
+                          </span>
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold text-white mb-3 tracking-tight">
                           {section.title}
                         </h2>
-                        <p className="text-base text-[#9AA0A6]">{section.subtitle}</p>
+                        <p className="text-lg text-[#6B7280]">{section.subtitle}</p>
                       </div>
 
-                      <div className="flex flex-col gap-5">
+                      <div className="flex flex-col gap-4">
                         {section.rules.map((rule, ruleIdx) => (
                           <motion.div
                             key={ruleIdx}
                             variants={itemVariants}
-                            className="flex gap-4 text-[15px] text-[#E3E3E3] leading-relaxed"
+                            className="group flex gap-4 text-[15px] text-[#D1D5DB] leading-relaxed p-3 rounded-xl hover:bg-[#1A1A1D] transition-colors"
                           >
-                            <span className="text-[#9AA0A6] font-medium mt-0.5 shrink-0 w-6">
+                            <span className="text-[#6B7280] font-medium mt-0.5 shrink-0 w-6 flex-shrink-0 group-hover:text-[#8AB4F8] transition-colors">
                               {ruleIdx + 1}.
                             </span>
-                            <div>{rule}</div>
+                            <div className="flex-1">{rule}</div>
                           </motion.div>
                         ))}
                       </div>
-                    </div>
+                    </motion.div>
                   </motion.section>
                 );
               })}
 
+              {/* Ranks Section */}
               <motion.section
                 id="ranks"
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, margin: "-80px" }}
                 variants={containerVariants}
                 className="scroll-mt-36"
               >
-                <div className="bg-[#1E1F20] rounded-3xl p-6 md:p-10 shadow-sm border border-[#282A2C]">
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-[#151518]/60 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-[#2D2D30] hover:border-[#3D3D40] transition-all duration-300"
+                >
                   <div className="mb-8">
-                    <span className="text-sm font-medium text-[#8AB4F8] mb-2 block">
-                      Раздел {String(ruleSections.length + 1).padStart(2, "0")}
-                    </span>
-                    <h2 className="text-2xl md:text-3xl font-medium text-[#E3E3E3] mb-2">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#8AB4F8]/20 to-[#6B9DFC]/10 border border-[#8AB4F8]/30">
+                        <span className="text-[#8AB4F8] font-bold text-lg">{String(ruleSections.length + 1).padStart(2, "0")}</span>
+                      </span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-semibold text-white mb-3 tracking-tight">
                       Звания всех фракций
                     </h2>
-                    <p className="text-base text-[#9AA0A6]">
-                      Иерархия вооруженных сил и гражданских групп.
-                    </p>
+                    <p className="text-lg text-[#6B7280]">Иерархия вооружённых сил и гражданских групп.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {ranks.map((faction, idx) => (
                       <motion.div
                         key={idx}
                         variants={itemVariants}
-                        className="bg-[#282A2C] rounded-2xl p-6"
+                        className="bg-gradient-to-br from-[#1A1A1D] to-[#151518] rounded-2xl p-6 border border-[#2D2D30] hover:border-[#8AB4F8]/30 transition-all duration-300"
                       >
-                        <h3 className="text-lg font-medium text-[#E3E3E3] mb-4 pb-3 border-b border-[#444746]">
+                        <h3 className="text-lg font-semibold text-white mb-5 pb-4 border-b border-[#2D2D30]">
                           {faction.faction}
                         </h3>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                           {faction.list.map((rank, rankIdx) => (
                             <div
                               key={rankIdx}
-                              className="py-2 border-b border-[#444746]/50 last:border-0 text-[15px] flex items-center justify-between text-[#E3E3E3]"
+                              className="py-2.5 border-b border-[#2D2D30]/50 last:border-0 text-[15px] flex items-center justify-between text-[#D1D5DB] hover:text-white transition-colors"
                             >
                               <span>{rank}</span>
-                              <span className="text-xs text-[#9AA0A6] font-mono">
+                              <span className="text-xs text-[#6B7280] font-mono bg-[#1A1A1D] px-2 py-1 rounded-md">
                                 {faction.list.length - rankIdx}
                               </span>
                             </div>
@@ -402,55 +430,68 @@ export default function Home() {
                       </motion.div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </motion.section>
 
+              {/* Documents Section */}
               <motion.section
                 id="documents"
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, margin: "-80px" }}
                 variants={containerVariants}
                 className="scroll-mt-36"
               >
-                <div className="bg-[#1E1F20] rounded-3xl p-6 md:p-10 shadow-sm border border-[#282A2C]">
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-[#151518]/60 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-[#2D2D30] hover:border-[#3D3D40] transition-all duration-300"
+                >
                   <div className="mb-8">
-                    <span className="text-sm font-medium text-[#8AB4F8] mb-2 block">
-                      Раздел {String(ruleSections.length + 2).padStart(2, "0")}
-                    </span>
-                    <h2 className="text-2xl md:text-3xl font-medium text-[#E3E3E3] mb-2">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#8AB4F8]/20 to-[#6B9DFC]/10 border border-[#8AB4F8]/30">
+                        <span className="text-[#8AB4F8] font-bold text-lg">{String(ruleSections.length + 2).padStart(2, "0")}</span>
+                      </span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-semibold text-white mb-3 tracking-tight">
                       Формат документов
                     </h2>
-                    <p className="text-base text-[#9AA0A6]">
-                      Стандартизированные бланки делопроизводства.
-                    </p>
+                    <p className="text-lg text-[#6B7280]">Стандартизированные бланки делопроизводства.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6">
-                    {documents.map((doc, idx) => (
-                      <motion.div
-                        key={idx}
-                        variants={itemVariants}
-                        className="bg-[#282A2C] rounded-2xl overflow-hidden"
-                      >
-                        <div className="px-6 py-4 border-b border-[#444746]">
-                          <h3 className="text-lg font-medium text-[#E3E3E3]">{doc.title}</h3>
-                        </div>
-                        <div className="p-6 bg-[#131314]/50">
-                          <pre className="font-mono text-sm whitespace-pre-wrap text-[#9AA0A6] leading-relaxed">
-                            {doc.content}
-                          </pre>
-                        </div>
-                      </motion.div>
-                    ))}
+                  <div className="grid grid-cols-1 gap-5">
+                    {documents.map((doc, idx) => {
+                      const Icon = doc.icon;
+                      return (
+                        <motion.div
+                          key={idx}
+                          variants={itemVariants}
+                          className="group bg-gradient-to-br from-[#1A1A1D] to-[#151518] rounded-2xl overflow-hidden border border-[#2D2D30] hover:border-[#8AB4F8]/30 transition-all duration-300"
+                        >
+                          <div className="flex items-center gap-4 px-6 py-4 border-b border-[#2D2D30] bg-[#151518]/50">
+                            <div className="w-10 h-10 rounded-xl bg-[#8AB4F8]/10 flex items-center justify-center">
+                              <Icon className="h-5 w-5 text-[#8AB4F8]" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white">{doc.title}</h3>
+                          </div>
+                          <div className="p-6">
+                            <pre className="font-mono text-sm whitespace-pre-wrap text-[#9CA3AF] leading-relaxed group-hover:text-[#D1D5DB] transition-colors">
+                              {doc.content}
+                            </pre>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
-                </div>
+                </motion.div>
               </motion.section>
             </div>
           </div>
 
-          <footer className="w-full py-8 text-center text-sm text-[#9AA0A6]">
-            Балканский Конфликт · v1.0 · 2026
+          <footer className="w-full py-10 text-center text-sm text-[#4B5563]">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#8AB4F8]/50" />
+              <span>Балканский Конфликт · v1.0 · 2026</span>
+            </div>
           </footer>
         </main>
       </div>
