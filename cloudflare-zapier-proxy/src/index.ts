@@ -109,19 +109,11 @@ async function handleDiscordCallback(request: Request, env: Env): Promise<Respon
     // Create session cookie
     const session = btoa(JSON.stringify({ userId, discordId: discordUser.id }));
     
-    return new Response(JSON.stringify({
-      success: true,
-      user: { 
-        id: userId, 
-        discordId: discordUser.id, 
-        username: discordUser.username, 
-        avatar: discordUser.avatar,
-        isAdmin: false 
-      }
-    }), {
+    // Redirect back to the frontend site
+    return new Response(null, {
+      status: 302,
       headers: {
-        ...corsHeaders(),
-        'Content-Type': 'application/json',
+        'Location': 'https://retrime.pages.dev',
         'Set-Cookie': `session=${session}; Path=/; HttpOnly; SameSite=Lax`,
       },
     });
