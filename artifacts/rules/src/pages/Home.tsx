@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ruleSections, ranks } from "../data/rules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Sidebar, MobileMenuTrigger } from "@/components/Sidebar";
@@ -7,12 +7,53 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { useChats } from "@/hooks/useChats";
 import { useSettings } from "@/hooks/useSettings";
 
-const factions = ["Гражданские", "Сербская Армия", "НАТО / Канадцы", "Армия РФ"];
+const factions = [
+  "Гражданские",
+  "Сербская Армия",
+  "НАТО / Канадцы",
+  "Армия РФ",
+];
 
 const documents = [
-  { title: "ШАБЛОН РАПОРТА", content: `КОМУ: Командиру подразделения\nОТ КОГО: [Звание] [Фамилия]\nДАТА: ДД.ММ.ГГГГ\n\nСОДЕРЖАНИЕ:\nДокладываю о происшествии...\n\nПОДПИСЬ: _______` },
-  { title: "ШАБЛОН ПРИКАЗА", content: `ПРИКАЗ № ___\nОТ: [Должность, Звание]\nДАТА: ДД.ММ.ГГГГ\n\nСОДЕРЖАНИЕ:\n1. Выдвинуться в квадрат B2\n2. Организовать блокпост\n\nПОДПИСЬ: _______` },
-  { title: "ПРОТОКОЛ ЗАДЕРЖАНИЯ", content: `ПРОТОКОЛ № ___\nОТ КОГО: Патрульный [Звание]\nДАТА: ДД.ММ.ГГГГ\nЗАДЕРЖАННЫЙ: [Имя]\n\nПРИЧИНА: Нарушение комендантского часа\n\nПОДПИСЬ: _______` },
+  {
+    title: "ШАБЛОН РАПОРТА",
+    content: `КОМУ: Командиру подразделения
+ОТ КОГО: [Звание] [Фамилия]
+ДАТА: ДД.ММ.ГГГГ
+
+СОДЕРЖАНИЕ:
+Докладываю о происшествии во время патруля квадрата D4. В 14:00 был обнаружен...
+
+ПОДПИСЬ: _______`,
+  },
+  {
+    title: "ШАБЛОН ПРИКАЗА",
+    content: `ПРИКАЗ № ___
+ОТ: [Должность, Звание]
+ДАТА: ДД.ММ.ГГГГ
+
+СОДЕРЖАНИЕ:
+1. Выдвинуться в квадрат B2 для зачистки.
+2. Организовать блокпост на перекрестке.
+3. Открывать огонь на поражение при сопротивлении.
+
+ПОДПИСЬ: _______`,
+  },
+  {
+    title: "ПРОТОКОЛ ЗАДЕРЖАНИЯ",
+    content: `ПРОТОКОЛ № ___
+ОТ КОГО: Патрульный [Звание]
+ДАТА: ДД.ММ.ГГГГ
+ЗАДЕРЖАННЫЙ: [Имя Фамилия или Описание]
+
+ПРИЧИНА ЗАДЕРЖАНИЯ:
+Нарушение комендантского часа, ношение оружия.
+ИЗЪЯТОЕ ИМУЩЕСТВО:
+- Пистолет ПМ
+- Радиостанция
+
+ПОДПИСЬ: _______`,
+  },
 ];
 
 export default function Home() {
@@ -40,7 +81,10 @@ export default function Home() {
     if (!el) return;
     el.addEventListener("scroll", updateNavScrollState, { passive: true });
     window.addEventListener("resize", updateNavScrollState);
-    return () => { el.removeEventListener("scroll", updateNavScrollState); window.removeEventListener("resize", updateNavScrollState); };
+    return () => {
+      el.removeEventListener("scroll", updateNavScrollState);
+      window.removeEventListener("resize", updateNavScrollState);
+    };
   }, [updateNavScrollState]);
 
   useEffect(() => {
@@ -52,7 +96,10 @@ export default function Home() {
     const el = navRef.current;
     if (!el) return;
     const amount = Math.max(240, el.clientWidth * 0.7);
-    el.scrollTo({ left: el.scrollLeft + (direction === "left" ? -amount : amount), behavior: "smooth" });
+    el.scrollTo({
+      left: el.scrollLeft + (direction === "left" ? -amount : amount),
+      behavior: "smooth",
+    });
   };
 
   useEffect(() => {
@@ -61,11 +108,17 @@ export default function Home() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setActiveSection(entry.target.id);
+
             if (navRef.current) {
               const container = navRef.current;
-              const activeBtn = container.querySelector<HTMLElement>(`[data-section="${entry.target.id}"]`);
+              const activeBtn = container.querySelector<HTMLElement>(
+                `[data-section="${entry.target.id}"]`,
+              );
               if (activeBtn) {
-                const target = activeBtn.offsetLeft - container.clientWidth / 2 + activeBtn.clientWidth / 2;
+                const target =
+                  activeBtn.offsetLeft -
+                  container.clientWidth / 2 +
+                  activeBtn.clientWidth / 2;
                 container.scrollTo({ left: target, behavior: "smooth" });
               }
             }
@@ -74,134 +127,342 @@ export default function Home() {
       },
       { rootMargin: "-20% 0px -60% 0px" },
     );
-    document.querySelectorAll("section[id]").forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+
+    const sections = document.querySelectorAll("section[id]");
+    sections.forEach((section) => observer.observe(section));
+
+    return () => sections.forEach((section) => observer.unobserve(section));
   }, []);
 
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
-    if (element) { element.scrollIntoView({ behavior: "smooth" }); setIsMobileMenuOpen(false); }
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+      setIsMobileMenuOpen(false);
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 },
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F3EF] text-[#2D2A26] flex font-sans">
-      <Sidebar expanded={sidebarExpanded} setExpanded={setSidebarExpanded} onOpenSettings={() => setSettingsOpen(true)} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-[#F5F3EF]/95 backdrop-blur border-b border-[#E8E4DD]">
+    <div className="min-h-screen bg-[#131314] text-[#E3E3E3] flex font-sans selection:bg-[#8AB4F8] selection:text-[#131314]">
+      <Sidebar
+        expanded={sidebarExpanded}
+        setExpanded={setSidebarExpanded}
+        onOpenSettings={() => setSettingsOpen(true)}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0 bg-[#131314]">
+        <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-[#131314]/90 backdrop-blur">
           <div className="flex items-center gap-3">
             <MobileMenuTrigger onClick={() => setIsMobileMenuOpen(true)} />
-            <span className="text-lg font-medium text-[#2D2A26] flex items-center gap-2">
-              <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-7 h-7 rounded-full object-cover" />
+            <span className="text-[#E3E3E3] text-xl font-medium tracking-tight flex items-center gap-2">
+              <img
+                src={`${import.meta.env.BASE_URL}logo.jpg`}
+                alt="Logo"
+                className="w-8 h-8 rounded-full object-cover"
+              />
               Балканский Конфликт
             </span>
           </div>
         </header>
 
-        <main className="flex-1">
-          <div className="max-w-3xl mx-auto px-6 py-12 pb-24 flex flex-col gap-12">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pt-4">
-              <p className="text-[#9A9488] text-sm uppercase tracking-widest">Добро пожаловать</p>
-              <h1 className="text-4xl md:text-5xl font-semibold text-[#2D2A26] tracking-tight font-serif">
-                Свод правил <span className="text-[#E67E22] font-serif">сервера</span>
+        <main className="flex-1 overflow-x-hidden">
+          <div className="max-w-[880px] mx-auto px-4 md:px-8 py-8 md:py-12 pb-24 flex flex-col gap-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="flex flex-col gap-6 pt-4 pb-8"
+            >
+              <h1 className="text-4xl md:text-5xl font-normal text-[#9AA0A6] tracking-tight">
+                Добро пожаловать
               </h1>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {factions.map((f) => (
-                  <span key={f} className="px-3 py-1.5 rounded-md bg-[#EAE6DF] text-[#5C5650] text-sm border border-[#DDD8CC]">{f}</span>
+              <h2 className="text-5xl md:text-6xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-[#8AB4F8] to-[#D7E3FC] tracking-tight">
+                Свод правил сервера
+              </h2>
+
+              <div className="flex flex-wrap gap-2 mt-4">
+                {factions.map((faction) => (
+                  <div
+                    key={faction}
+                    className="px-4 py-2 rounded-full bg-[#1E1F20] text-[#E3E3E3] text-sm font-medium border border-[#444746] select-none"
+                  >
+                    {faction}
+                  </div>
                 ))}
               </div>
             </motion.div>
 
-            <div className="sticky top-20 z-20 py-2 bg-[#F5F3EF]/95 backdrop-blur -mx-6 px-6 md:mx-0 md:px-0">
+            <div className="sticky top-20 z-20 py-2 bg-[#131314]/90 backdrop-blur -mx-4 px-4 md:mx-0 md:px-0">
               <div className="relative">
-                {canScrollLeft && (
-                  <button onClick={() => scrollNavBy("left")} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 flex items-center justify-center rounded-lg bg-[#EAE6DF] border border-[#DDD8CC] text-[#9A9488] hover:text-[#2D2A26]">
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                )}
-                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#F5F3EF] to-transparent z-10" />
-                <div ref={navRef} onWheel={(e) => { if (e.deltaY !== 0) { e.preventDefault(); e.currentTarget.scrollLeft += e.deltaY; } }} className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1 px-10 scroll-smooth">
-                  {ruleSections.map((s) => (
-                    <button key={s.id} data-section={s.id} onClick={() => scrollTo(s.id)} className={`shrink-0 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeSection === s.id ? "bg-[#E67E22] text-white" : "bg-[#EAE6DF] text-[#5C5650] border border-[#DDD8CC] hover:text-[#2D2A26]"}`}>
-                      {s.title}
+                <AnimatePresence>
+                  {canScrollLeft && (
+                    <motion.button
+                      key="left-arrow"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => scrollNavBy("left")}
+                      aria-label="Прокрутить влево"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 flex items-center justify-center rounded-full bg-[#282A2C] hover:bg-[#444746] text-[#E3E3E3] shadow-md"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+
+                <div
+                  className={`pointer-events-none absolute left-0 top-0 bottom-2 w-12 bg-gradient-to-r from-[#131314] to-transparent transition-opacity duration-200 ${
+                    canScrollLeft ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+
+                <div
+                  ref={navRef}
+                  onWheel={(e) => {
+                    if (e.deltaY === 0) return;
+                    const el = e.currentTarget;
+                    const max = el.scrollWidth - el.clientWidth;
+                    if (max <= 0) return;
+                    if (
+                      (e.deltaY > 0 && el.scrollLeft < max) ||
+                      (e.deltaY < 0 && el.scrollLeft > 0)
+                    ) {
+                      e.preventDefault();
+                      el.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1 px-12 scroll-smooth"
+                >
+                  {ruleSections.map((section) => (
+                    <button
+                      key={section.id}
+                      data-section={section.id}
+                      onClick={() => scrollTo(section.id)}
+                      className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                        activeSection === section.id
+                          ? "bg-[#8AB4F8]/10 text-[#8AB4F8]"
+                          : "bg-[#1E1F20] text-[#E3E3E3] hover:bg-[#282A2C]"
+                      }`}
+                    >
+                      {section.title}
                     </button>
                   ))}
-                  <button data-section="ranks" onClick={() => scrollTo("ranks")} className={`shrink-0 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeSection === "ranks" ? "bg-[#E67E22] text-white" : "bg-[#EAE6DF] text-[#5C5650] border border-[#DDD8CC] hover:text-[#2D2A26]"}`}>Звания</button>
-                  <button data-section="documents" onClick={() => scrollTo("documents")} className={`shrink-0 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeSection === "documents" ? "bg-[#E67E22] text-white" : "bg-[#EAE6DF] text-[#5C5650] border border-[#DDD8CC] hover:text-[#2D2A26]"}`}>Документы</button>
-                </div>
-                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F5F3EF] to-transparent z-10" />
-                {canScrollRight && (
-                  <button onClick={() => scrollNavBy("right")} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 flex items-center justify-center rounded-lg bg-[#EAE6DF] border border-[#DDD8CC] text-[#9A9488] hover:text-[#2D2A26]">
-                    <ChevronRight className="h-4 w-4" />
+                  <button
+                    data-section="ranks"
+                    onClick={() => scrollTo("ranks")}
+                    className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                      activeSection === "ranks"
+                        ? "bg-[#8AB4F8]/10 text-[#8AB4F8]"
+                        : "bg-[#1E1F20] text-[#E3E3E3] hover:bg-[#282A2C]"
+                    }`}
+                  >
+                    Звания
                   </button>
-                )}
+                  <button
+                    data-section="documents"
+                    onClick={() => scrollTo("documents")}
+                    className={`shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                      activeSection === "documents"
+                        ? "bg-[#8AB4F8]/10 text-[#8AB4F8]"
+                        : "bg-[#1E1F20] text-[#E3E3E3] hover:bg-[#282A2C]"
+                    }`}
+                  >
+                    Документы
+                  </button>
+                </div>
+
+                <div
+                  className={`pointer-events-none absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#131314] to-transparent transition-opacity duration-200 ${
+                    canScrollRight ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+
+                <AnimatePresence>
+                  {canScrollRight && (
+                    <motion.button
+                      key="right-arrow"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => scrollNavBy("right")}
+                      aria-label="Прокрутить вправо"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 flex items-center justify-center rounded-full bg-[#282A2C] hover:bg-[#444746] text-[#E3E3E3] shadow-md"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
-            <div className="space-y-8">
-              {ruleSections.map((section, idx) => (
-                <section key={section.id} id={section.id} className="scroll-mt-36">
-                  <div className="border border-[#DDD8CC] rounded-xl p-6 bg-white shadow-sm">
-                    <div className="mb-6">
-                      <span className="text-xs font-medium text-[#E67E22] uppercase tracking-wider">Раздел {String(idx + 1).padStart(2, "0")}</span>
-                      <h2 className="text-2xl font-semibold text-[#2D2A26] mt-2 font-serif">{section.title}</h2>
-                      <p className="text-[#9A9488] mt-1">{section.subtitle}</p>
-                    </div>
-                    <div className="space-y-3">
-                      {section.rules.map((rule, rIdx) => (
-                        <div key={rIdx} className="flex gap-3 text-[#4A4540]">
-                          <span className="text-[#9A9488] font-medium shrink-0 w-5">{rIdx + 1}.</span>
-                          <span>{rule}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              ))}
+            <div className="flex flex-col gap-10">
+              {ruleSections.map((section, index) => {
+                const num = String(index + 1).padStart(2, "0");
+                return (
+                  <motion.section
+                    key={section.id}
+                    id={section.id}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    variants={containerVariants}
+                    className="scroll-mt-36"
+                  >
+                    <div className="bg-[#1E1F20] rounded-3xl p-6 md:p-10 shadow-sm border border-[#282A2C]">
+                      <div className="mb-8">
+                        <span className="text-sm font-medium text-[#8AB4F8] mb-2 block">
+                          Раздел {num}
+                        </span>
+                        <h2 className="text-2xl md:text-3xl font-medium text-[#E3E3E3] mb-2">
+                          {section.title}
+                        </h2>
+                        <p className="text-base text-[#9AA0A6]">{section.subtitle}</p>
+                      </div>
 
-              <section id="ranks" className="scroll-mt-36">
-                <div className="border border-[#DDD8CC] rounded-xl p-6 bg-white shadow-sm">
-                  <span className="text-xs font-medium text-[#E67E22] uppercase tracking-wider">Раздел {String(ruleSections.length + 1).padStart(2, "0")}</span>
-                  <h2 className="text-2xl font-semibold text-[#2D2A26] mt-2 mb-6 font-serif">Звания фракций</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-5">
+                        {section.rules.map((rule, ruleIdx) => (
+                          <motion.div
+                            key={ruleIdx}
+                            variants={itemVariants}
+                            className="flex gap-4 text-[15px] text-[#E3E3E3] leading-relaxed"
+                          >
+                            <span className="text-[#9AA0A6] font-medium mt-0.5 shrink-0 w-6">
+                              {ruleIdx + 1}.
+                            </span>
+                            <div>{rule}</div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.section>
+                );
+              })}
+
+              <motion.section
+                id="ranks"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                variants={containerVariants}
+                className="scroll-mt-36"
+              >
+                <div className="bg-[#1E1F20] rounded-3xl p-6 md:p-10 shadow-sm border border-[#282A2C]">
+                  <div className="mb-8">
+                    <span className="text-sm font-medium text-[#8AB4F8] mb-2 block">
+                      Раздел {String(ruleSections.length + 1).padStart(2, "0")}
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-medium text-[#E3E3E3] mb-2">
+                      Звания всех фракций
+                    </h2>
+                    <p className="text-base text-[#9AA0A6]">
+                      Иерархия вооруженных сил и гражданских групп.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {ranks.map((faction, idx) => (
-                      <div key={idx} className="border border-[#DDD8CC] rounded-lg p-4 bg-[#FAF9F7]">
-                        <h3 className="text-sm font-medium text-[#2D2A26] mb-3 pb-2 border-b border-[#DDD8CC]">{faction.faction}</h3>
-                        <div className="space-y-1">
-                          {faction.list.map((rank, rIdx) => (
-                            <div key={rIdx} className="flex justify-between text-sm text-[#5C5650]">
+                      <motion.div
+                        key={idx}
+                        variants={itemVariants}
+                        className="bg-[#282A2C] rounded-2xl p-6"
+                      >
+                        <h3 className="text-lg font-medium text-[#E3E3E3] mb-4 pb-3 border-b border-[#444746]">
+                          {faction.faction}
+                        </h3>
+                        <div className="flex flex-col">
+                          {faction.list.map((rank, rankIdx) => (
+                            <div
+                              key={rankIdx}
+                              className="py-2 border-b border-[#444746]/50 last:border-0 text-[15px] flex items-center justify-between text-[#E3E3E3]"
+                            >
                               <span>{rank}</span>
-                              <span className="text-[#9A9488] text-xs">{faction.list.length - rIdx}</span>
+                              <span className="text-xs text-[#9AA0A6] font-mono">
+                                {faction.list.length - rankIdx}
+                              </span>
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
-              </section>
+              </motion.section>
 
-              <section id="documents" className="scroll-mt-36">
-                <div className="border border-[#DDD8CC] rounded-xl p-6 bg-white shadow-sm">
-                  <span className="text-xs font-medium text-[#E67E22] uppercase tracking-wider">Раздел {String(ruleSections.length + 2).padStart(2, "0")}</span>
-                  <h2 className="text-2xl font-semibold text-[#2D2A26] mt-2 mb-6 font-serif">Документы</h2>
-                  <div className="space-y-4">
+              <motion.section
+                id="documents"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                variants={containerVariants}
+                className="scroll-mt-36"
+              >
+                <div className="bg-[#1E1F20] rounded-3xl p-6 md:p-10 shadow-sm border border-[#282A2C]">
+                  <div className="mb-8">
+                    <span className="text-sm font-medium text-[#8AB4F8] mb-2 block">
+                      Раздел {String(ruleSections.length + 2).padStart(2, "0")}
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-medium text-[#E3E3E3] mb-2">
+                      Формат документов
+                    </h2>
+                    <p className="text-base text-[#9AA0A6]">
+                      Стандартизированные бланки делопроизводства.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
                     {documents.map((doc, idx) => (
-                      <div key={idx} className="border border-[#DDD8CC] rounded-lg overflow-hidden">
-                        <div className="px-4 py-3 border-b border-[#DDD8CC] bg-[#FAF9F7]">
-                          <h3 className="text-sm font-medium text-[#2D2A26]">{doc.title}</h3>
+                      <motion.div
+                        key={idx}
+                        variants={itemVariants}
+                        className="bg-[#282A2C] rounded-2xl overflow-hidden"
+                      >
+                        <div className="px-6 py-4 border-b border-[#444746]">
+                          <h3 className="text-lg font-medium text-[#E3E3E3]">{doc.title}</h3>
                         </div>
-                        <pre className="p-4 text-xs text-[#9A9488] whitespace-pre-wrap font-mono">{doc.content}</pre>
-                      </div>
+                        <div className="p-6 bg-[#131314]/50">
+                          <pre className="font-mono text-sm whitespace-pre-wrap text-[#9AA0A6] leading-relaxed">
+                            {doc.content}
+                          </pre>
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
-              </section>
+              </motion.section>
             </div>
           </div>
-          <footer className="py-8 text-center text-xs text-[#9A9488]">Балканский Конфликт · 2026</footer>
+
+          <footer className="w-full py-8 text-center text-sm text-[#9AA0A6]">
+            Балканский Конфликт · v1.0 · 2026
+          </footer>
         </main>
       </div>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} setSettings={(u) => setSettings(u(settings))} hasChats={chats.length > 0} onClearChats={clearChats} />
+
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        setSettings={(u) => setSettings(u(settings))}
+        hasChats={chats.length > 0}
+        onClearChats={clearChats}
+      />
     </div>
   );
 }
