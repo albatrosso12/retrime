@@ -109,12 +109,13 @@ async function handleDiscordCallback(request: Request, env: Env): Promise<Respon
     // Create session cookie
     const session = btoa(JSON.stringify({ userId, discordId: discordUser.id }));
     
-    // Redirect back to the frontend site
+    // Redirect back to the frontend site with session token in URL hash
+    // Using hash fragment because frontend and backend are on different subdomains
+    // Hash is not sent to server, only processed by client
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': 'https://retrime.pages.dev',
-        'Set-Cookie': `session=${session}; Path=/; HttpOnly; SameSite=Lax`,
+        'Location': `https://retrime.pages.dev/auth/callback#token=${session}`,
       },
     });
 
@@ -123,16 +124,16 @@ async function handleDiscordCallback(request: Request, env: Env): Promise<Respon
   }
 }
 
-// Get current user from session
+// Get current user from token in Authorization header
 async function handleGetMe(request: Request, env: Env): Promise<Response> {
-  const cookie = request.headers.get('Cookie');
-  if (!cookie) return errorResponse('Not authenticated', 401);
-
-  const sessionCookie = cookie.split(';').find(c => c.trim().startsWith('session='));
-  if (!sessionCookie) return errorResponse('Not authenticated', 401);
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return errorResponse('Not authenticated', 401);
+  }
 
   try {
-    const session = JSON.parse(atob(sessionCookie.split('=')[1]));
+    const token = authHeader.substring(7); // Remove 'Bearer '
+    const session = JSON.parse(atob(token));
     const user = await env.DB.prepare('SELECT * FROM users WHERE id = ?')
       .bind(session.userId)
       .first();
@@ -147,7 +148,7 @@ async function handleGetMe(request: Request, env: Env): Promise<Response> {
       isAdmin: user.is_admin === 1
     });
   } catch {
-    return errorResponse('Invalid session', 401);
+    return errorResponse('Invalid token', 401);
   }
 }
 

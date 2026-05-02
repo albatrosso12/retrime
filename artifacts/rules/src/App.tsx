@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ChatPage from "@/pages/ChatPage";
 import ReviewAppealsPage from "@/pages/ReviewAppealsPage";
+import AuthCallback from "@/pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/chat/:id" component={ChatPage} />
       <Route path="/review" component={ReviewAppealsPage} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route component={NotFound} />
     </Switch>
   );

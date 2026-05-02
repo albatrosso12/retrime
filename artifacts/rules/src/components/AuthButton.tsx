@@ -11,30 +11,39 @@ export function AuthButton() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
 
-  const { data: userData, isError } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
-
+  // Check for token in localStorage on mount
   useEffect(() => {
-    if (userData && !isError) {
-      setIsAuthenticated(true);
-      setUser(userData);
-    } else {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
       setIsAuthenticated(false);
       setUser(null);
+      return;
     }
-  }, [userData, isError]);
 
-  const logoutMutation = useMutation({
-    mutationFn: logout,
-    onSuccess: () => {
-      setIsAuthenticated(false);
-      setUser(null);
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-    },
-  });
+    // Try to get user data using the token
+    // We'll use a custom fetch with the token
+    fetch(`${import.meta.env.VITE_API_URL || 'https://retrime.korsetov2009.workers.dev'}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          setIsAuthenticated(true);
+          setUser(data);
+        } else {
+          localStorage.removeItem('auth_token');
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem('auth_token');
+        setIsAuthenticated(false);
+        setUser(null);
+      });
+  }, []);
 
   const handleLogin = () => {
     // Super simple redirect - no variables, no logic
@@ -42,7 +51,16 @@ export function AuthButton() {
   };
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    localStorage.removeItem('auth_token');
+    setIsAuthenticated(false);
+    setUser(null);
+    // Optionally call logout endpoint
+    fetch(`${import.meta.env.VITE_API_URL || 'https://retrime.korsetov2009.workers.dev'}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+      },
+    }).catch(() => {});
   };
 
   if (isAuthenticated && user) {
