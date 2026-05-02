@@ -1,0 +1,10 @@
+{
+  "name": "edge-auth",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "wrangler build",
+    "publish": "wrangler publish"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,10 @@
+name = "edge-auth"
+type = "javascript"
+account_id = "REPLACE_ME"
+workers_dev = true
+route = ""
+compatibility_date = "2026-01-01"
+
+[[kv_namespaces]]
+binding = "COMPLAINTS_KV" 
+id = "REPLACE_ME_KV_ID"
