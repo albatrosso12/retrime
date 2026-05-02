@@ -45,4 +45,19 @@ setAuthTokenGetter(() => {
   return localStorage.getItem('auth_token');
 });
 
+// Handle token in URL hash for direct redirects
+const processHashToken = () => {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#token=')) {
+    const token = hash.substring(7).split('&')[0];
+    if (token) {
+      localStorage.setItem('auth_token', token);
+      document.cookie = `auth_token=${token};path=/;max-age=31536000`;
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      window.dispatchEvent(new CustomEvent('auth:token-changed'));
+    }
+  }
+};
+processHashToken();
+
 createRoot(document.getElementById("root")!).render(<App />);
