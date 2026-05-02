@@ -3,12 +3,33 @@ import App from "./App";
 import "./index.css";
 import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 
-// Ignore Chrome extension errors
+// Suppress Chrome extension errors aggressively
+const chromeExtPatterns = [
+  'Could not establish connection',
+  'Receiving end does not exist',
+  'runtime.lastError',
+  'The message port closed',
+  'Extension context invalidated'
+];
+
+// Suppress both error and unhandledrejection events
 window.addEventListener('error', (event) => {
-  if (event.message?.includes('Could not establish connection') ||
-      event.message?.includes('Receiving end does not exist')) {
+  const message = event.message || '';
+  const filename = event.filename || '';
+  const isExtensionError = chromeExtPatterns.some(p => message.includes(p)) ||
+    filename.includes('chrome-extension://') ||
+    filename.includes('extensions::');
+  if (isExtensionError) {
     event.preventDefault();
+    event.stopPropagation();
     return false;
+  }
+}, true);
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason?.message || String(event.reason);
+  if (chromeExtPatterns.some(p => reason.includes(p))) {
+    event.preventDefault();
   }
 });
 
@@ -22,6 +43,15 @@ setBaseUrl(apiUrl);
 // Set auth token getter to read from localStorage
 setAuthTokenGetter(() => {
   return localStorage.getItem('auth_token');
+});
+
+// Listen for unauthorized events (401) and redirect
+window.addEventListener('auth:unauthorized', () => {
+  localStorage.removeItem('auth_token');
+  // Only redirect if not already on home page
+  if (window.location.pathname !== '/') {
+    window.location.href = '/';
+  }
 });
 
 createRoot(document.getElementById("root")!).render(<App />);

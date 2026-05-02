@@ -363,6 +363,19 @@ export async function customFetch<T = unknown>(
   const response = await fetch(input, { ...init, method, headers });
 
   if (!response.ok) {
+    // Handle 401 Unauthorized globally
+    if (response.status === 401) {
+      // Clear token from localStorage
+      try {
+        localStorage.removeItem('auth_token');
+      } catch {
+        // ignore
+      }
+      // Dispatch event for app to handle (redirect to login)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+    }
     const errorData = await parseErrorBody(response, method);
     throw new ApiError(response, errorData, requestInfo);
   }
