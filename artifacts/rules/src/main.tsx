@@ -40,17 +40,7 @@ document.documentElement.classList.add("dark");
 const apiUrl = import.meta.env.VITE_API_URL || "https://retrime.korsetov2009.workers.dev";
 setBaseUrl(apiUrl);
 
-// Clear any potentially invalid token on load
-// This prevents 401 errors from showing in console
-const existingToken = localStorage.getItem('auth_token');
-if (existingToken) {
-  // Remove token initially - it will be re-validated by AuthButton
-  // This prevents the initial 401 error
-  localStorage.removeItem('auth_token');
-}
-
 // Set auth token getter to read from localStorage
-// The token will be set after validation by AuthButton
 setAuthTokenGetter(() => {
   return localStorage.getItem('auth_token');
 });
@@ -58,7 +48,8 @@ setAuthTokenGetter(() => {
 // Listen for unauthorized events (401) and redirect
 window.addEventListener('auth:unauthorized', () => {
   localStorage.removeItem('auth_token');
-  // Only redirect if not already on home page
+  // Dispatch custom event to notify components
+  window.dispatchEvent(new CustomEvent('auth:token-changed'));
   if (window.location.pathname !== '/') {
     window.location.href = '/';
   }

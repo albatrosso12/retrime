@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, User } from "lucide-react";
-import { useLocation } from "wouter";
 import { getCurrentUser, logout, setBaseUrl } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function AuthButton() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
 
   // Set base URL for API client
@@ -16,8 +14,8 @@ export function AuthButton() {
     setBaseUrl(import.meta.env.VITE_API_URL || 'https://retrime.korsetov2009.workers.dev');
   }, []);
 
-  // Check for token in localStorage on mount
-  useEffect(() => {
+  // Function to validate token and load user data
+  const validateToken = () => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
       setIsAuthenticated(false);
@@ -25,7 +23,6 @@ export function AuthButton() {
       return;
     }
 
-    // Try to get user data using the API client
     getCurrentUser()
       .then(data => {
         if (data && data.id) {
@@ -38,13 +35,29 @@ export function AuthButton() {
         }
       })
       .catch((err) => {
-        // If 401 or other error, clear token
         if (err?.status === 401) {
           localStorage.removeItem('auth_token');
         }
         setIsAuthenticated(false);
         setUser(null);
       });
+  };
+
+  // Check for token in localStorage on mount
+  useEffect(() => {
+    validateToken();
+  }, []);
+
+  // Listen for token changes (after login/logout)
+  useEffect(() => {
+    const handleTokenChange = () => {
+      validateToken();
+    };
+
+    window.addEventListener('auth:token-changed', handleTokenChange);
+    return () => {
+      window.removeEventListener('auth:token-changed', handleTokenChange);
+    };
   }, []);
 
   const handleLogin = () => {
@@ -55,33 +68,29 @@ export function AuthButton() {
     localStorage.removeItem('auth_token');
     setIsAuthenticated(false);
     setUser(null);
-    // Call logout endpoint using API client
-    logout().catch(() => {});
     queryClient.clear();
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('auth:token-changed'));
+    // Call logout endpoint
+    logout().catch(() => {});
   };
 
   if (isAuthenticated && user) {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
         {user.avatar ? (
-          <img 
-            src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png`}
+          <img
+            src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png?size=64`}
             alt="Avatar"
-            className="w-6 h-6 rounded-full"
+            className="w-8 h-8 rounded-full border-2 border-[#5865F2] hover:border-[#8AB4F8] transition-colors cursor-pointer"
+            onClick={handleLogout}
+            title="Выйти"
           />
         ) : (
-          <User className="w-5 h-5 text-[#9AA0A6]" />
+          <div className="w-8 h-8 rounded-full bg-[#282A2C] flex items-center justify-center cursor-pointer hover:bg-[#3C4043] transition-colors" onClick={handleLogout} title="Выйти">
+            <User className="w-5 h-5 text-[#9AA0A6]" />
+          </div>
         )}
-        <span className="text-sm text-[#E3E3E3] truncate flex-1">{user.username}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleLogout}
-          className="rounded-full text-[#9AA0A6] hover:bg-[#282A2C] hover:text-[#E3E3E3] h-8 w-8"
-          aria-label="Выйти"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
       </div>
     );
   }

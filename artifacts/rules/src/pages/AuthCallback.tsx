@@ -7,14 +7,14 @@ export default function AuthCallback() {
   useEffect(() => {
     // Get token from URL hash (e.g., #token=...)
     const hash = window.location.hash;
-    let hasToken = false;
     if (hash && hash.startsWith('#token=')) {
       const token = hash.substring(7); // Remove '#token='
       if (token) {
         localStorage.setItem('auth_token', token);
-        hasToken = true;
         // Clean URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Notify AuthButton to re-validate
+        window.dispatchEvent(new CustomEvent('auth:token-changed'));
       }
     }
     // Redirect to home page
