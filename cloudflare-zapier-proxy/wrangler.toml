@@ -5,5 +5,7 @@ compatibility_date = "2026-05-01"
 main = "src/index.ts"
 
 # Environment variables for the worker
+# For production, use: wrangler secret put ZAP_URL
+# For local dev, you can uncomment below:
 [vars]
 ZAP_URL = "https://hooks.zapier.com/hooks/catch/27410332/uva81ym/"
