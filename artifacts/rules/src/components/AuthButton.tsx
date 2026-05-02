@@ -37,9 +37,9 @@ export function AuthButton() {
   });
 
   const handleLogin = () => {
-    // Direct Discord OAuth redirect using env variables
-    const clientId = import.meta.env.DISCORD_CLIENT_ID;
-    const redirectUri = import.meta.env.DISCORD_REDIRECT_URI;
+    // Direct Discord OAuth redirect using env variables (Vite requires VITE_ prefix)
+    const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
+    const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
     
     if (clientId && redirectUri) {
       // Construct Discord OAuth URL directly
@@ -52,7 +52,7 @@ export function AuthButton() {
       window.location.href = discordAuthUrl.toString();
     } else {
       // Fallback to API server if env variables not set
-      const apiUrl = import.meta.env.API_URL || "http://localhost:3000";
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
       window.location.href = `${apiUrl}/api/auth/discord`;
     }
   };

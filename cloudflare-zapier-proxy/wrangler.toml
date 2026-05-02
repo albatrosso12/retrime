@@ -1,11 +1,16 @@
 name = "retrime"
 compatibility_date = "2026-05-01"
-
-# Entry point for the worker.
 main = "src/index.ts"
 
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "balkan-rules-db"
+database_id = "your-d1-database-id" # You'll create this via `wrangler d1 create balkan-rules-db`
+
 # Environment variables for the worker
-# For production, use: wrangler secret put ZAP_URL
-# For local dev, you can uncomment below:
 [vars]
+DISCORD_CLIENT_ID = "1499936916127088793"
+DISCORD_CLIENT_SECRET = "oUJQFiXn7s7tKm8DIAK9xGhefRkOYwu6"
+DISCORD_REDIRECT_URI = "https://discord.com/oauth2/authorize?client_id=1499936916127088793&response_type=code&redirect_uri=https%3A%2F%2Fretrime.korsetov2009.workers.dev%2Fauth%2Fdiscord%2Fcallback&scope=identify+email+guilds.join"
 ZAP_URL = "https://hooks.zapier.com/hooks/catch/27410332/uva81ym/"
