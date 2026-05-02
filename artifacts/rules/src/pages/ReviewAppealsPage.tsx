@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Scale, ArrowLeft, CheckCircle2, XCircle, HelpCircle, MessageSquare } from "lucide-react";
+import { Scale, ArrowLeft, CheckCircle2, XCircle, HelpCircle, MessageSquare, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,11 @@ import {
   getCurrentUser,
   type Appeal,
   type Verdict,
+  setBaseUrl,
 } from "@workspace/api-client-react";
+
+const API_URL = import.meta.env.VITE_API_URL || "https://retrime.korsetov2009.workers.dev";
+setBaseUrl(API_URL);
 
 const verdictLabels: Record<string, { label: string; color: string; icon: any }> = {
   guilty: { label: "Виновен", color: "bg-red-500", icon: XCircle },
@@ -24,30 +28,40 @@ const verdictLabels: Record<string, { label: string; color: string; icon: any }>
   insufficient_evidence: { label: "Недостаточно доказательств", color: "bg-yellow-500", icon: HelpCircle },
 };
 
+function getAuthToken(): string | null {
+  const local = localStorage.getItem("auth_token");
+  if (local) return local;
+  const match = document.cookie.match(/(?:^|; )auth_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function ReviewAppealsPage() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [verdict, setVerdict] = useState("guilty");
   const [reason, setReason] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
+    const token = getAuthToken();
     if (!token) {
-      navigate("/");
+      setAuthError("Требуется авторизация");
       return;
     }
+
     getCurrentUser()
       .then((user) => {
         if (!user || !user.id) {
           localStorage.removeItem("auth_token");
-          navigate("/");
+          setAuthError("Требуется авторизация");
         }
       })
-      .catch((err) => {
-        if (err?.status === 401) {
+      .catch((err: any) => {
+        console.error("Auth check failed:", err);
+        if (err?.status === 401 || err?.status === 403) {
           localStorage.removeItem("auth_token");
-          navigate("/");
+          setAuthError(err?.message || "Требуется авторизация");
         }
       });
   }, [navigate]);
@@ -55,11 +69,11 @@ export default function ReviewAppealsPage() {
   const { data: appeals = [], isLoading, error } = useQuery({
     queryKey: ["appealsForReview"],
     queryFn: () => getAppealsForReview({ status: "pending" }),
-    enabled: !!localStorage.getItem("auth_token"),
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) {
+    enabled: !!getAuthToken(),
+    retry: (failureCount, err: any) => {
+      if (err?.status === 401 || err?.status === 403) {
         localStorage.removeItem("auth_token");
-        window.location.href = "/";
+        navigate("/");
         return false;
       }
       return failureCount < 3;
@@ -69,15 +83,7 @@ export default function ReviewAppealsPage() {
   const { data: verdicts = [] } = useQuery({
     queryKey: ["verdicts", selectedAppeal?.id],
     queryFn: () => (selectedAppeal ? getVerdicts(selectedAppeal.id) : Promise.resolve([])),
-    enabled: !!selectedAppeal && !!localStorage.getItem("auth_token"),
-    retry: (failureCount, error: any) => {
-      if (error?.status === 401) {
-        localStorage.removeItem("auth_token");
-        window.location.href = "/";
-        return false;
-      }
-      return failureCount < 3;
-    },
+    enabled: !!selectedAppeal && !!getAuthToken(),
   });
 
   const submitVerdictMutation = useMutation({
@@ -98,6 +104,21 @@ export default function ReviewAppealsPage() {
       reason,
     });
   };
+
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-[#131314] text-[#E3E3E3] flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+          <h2 className="text-xl font-semibold mb-2">Требуется авторизация</h2>
+          <p className="text-[#9AA0A6] mb-4">{authError}</p>
+          <Button onClick={() => navigate("/")} className="bg-[#8AB4F8] hover:bg-[#7AA4E8] text-[#131314]">
+            На главную
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -163,7 +184,7 @@ export default function ReviewAppealsPage() {
                         </Badge>
                       </div>
                       <p className="text-sm text-[#9AA0A6] mb-2">
-                        {appeal.nickname} &bull; {appeal.faction}
+                        {appeal.nickname} &bull; {appeal.faction || "—"}
                       </p>
                       <Badge className="bg-[#282A2C] text-[#9AA0A6]">
                         {appeal.category}
@@ -292,6 +313,12 @@ export default function ReviewAppealsPage() {
                     >
                       {submitVerdictMutation.isPending ? "Отправка..." : "Отправить вердикт"}
                     </Button>
+
+                    {submitVerdictMutation.isError && (
+                      <div className="text-red-500 text-sm text-center">
+                        Ошибка: {(submitVerdictMutation.error as any)?.message}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>

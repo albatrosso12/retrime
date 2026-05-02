@@ -1,61 +1,72 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, User, LogOut } from "lucide-react";
 import { getCurrentUser, logout, setBaseUrl } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Initialize base URL once at module level
+const API_URL = import.meta.env.VITE_API_URL || "https://retrime.korsetov2009.workers.dev";
+setBaseUrl(API_URL);
+
 export function AuthButton() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    setBaseUrl(import.meta.env.VITE_API_URL || "https://retrime.korsetov2009.workers.dev");
+  const getToken = useCallback(() => {
+    const localToken = localStorage.getItem("auth_token");
+    if (localToken) return localToken;
+    
+    const cookieMatch = document.cookie.match(/(?:^|; )auth_token=([^;]*)/);
+    return cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
   }, []);
 
-  const validateToken = () => {
-    const token =
-      localStorage.getItem("auth_token") ||
-      (() => {
-        const match = document.cookie.match(/(?:^|; )auth_token=([^;]*)/);
-        return match ? decodeURIComponent(match[1]) : null;
-      })();
+  const validateToken = useCallback(async () => {
+    const token = getToken();
+    
     if (!token) {
       setIsAuthenticated(false);
       setUser(null);
+      setIsLoading(false);
       return;
     }
 
-    getCurrentUser()
-      .then((data) => {
-        if (data && data.id) {
-          setIsAuthenticated(true);
-          setUser(data);
-        } else {
-          localStorage.removeItem("auth_token");
-          setIsAuthenticated(false);
-          setUser(null);
-        }
-      })
-      .catch(() => {
+    try {
+      const userData = await getCurrentUser();
+      if (userData && userData.id) {
+        setIsAuthenticated(true);
+        setUser(userData);
+      } else {
         localStorage.removeItem("auth_token");
         setIsAuthenticated(false);
         setUser(null);
-      });
-  };
+      }
+    } catch (err: any) {
+      console.error("Auth validation failed:", err);
+      localStorage.removeItem("auth_token");
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getToken]);
 
   useEffect(() => {
     validateToken();
-  }, []);
+  }, [validateToken]);
 
   useEffect(() => {
-    const handleTokenChange = () => validateToken();
+    const handleTokenChange = () => {
+      setIsLoading(true);
+      validateToken();
+    };
     window.addEventListener("auth:token-changed", handleTokenChange);
     return () => window.removeEventListener("auth:token-changed", handleTokenChange);
-  }, []);
+  }, [validateToken]);
 
   const handleLogin = () => {
-    window.location.href = "https://retrime.korsetov2009.workers.dev/auth/discord";
+    window.location.href = `${API_URL}/auth/discord`;
   };
 
   const handleLogout = () => {
@@ -66,6 +77,16 @@ export function AuthButton() {
     window.dispatchEvent(new CustomEvent("auth:token-changed"));
     logout().catch(() => {});
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2">
+        <div className="w-8 h-8 rounded-full bg-[#282A2C] flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-[#9AA0A6] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   if (isAuthenticated && user) {
     const avatarHash = user.avatar || "";
@@ -89,8 +110,6 @@ export function AuthButton() {
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
-                  (e.target as HTMLImageElement).parentElement!.innerHTML =
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user w-5 h-5 text-[#9AA0A6]"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
                 }}
               />
             ) : (
