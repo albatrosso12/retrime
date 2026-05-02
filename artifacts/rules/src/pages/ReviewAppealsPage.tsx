@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Scale, ArrowLeft, CheckCircle2, XCircle, HelpCircle, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ const verdictLabels: Record<string, { label: string; color: string; icon: any }>
 };
 
 export default function ReviewAppealsPage() {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [verdict, setVerdict] = useState("guilty");
