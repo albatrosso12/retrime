@@ -37,19 +37,19 @@ export function AuthButton() {
   const handleLogin = () => { window.location.href = `${API_URL}/auth/discord`; };
   const handleLogout = () => { localStorage.removeItem("auth_token"); setIsAuthenticated(false); setUser(null); queryClient.clear(); window.dispatchEvent(new CustomEvent("auth:token-changed")); logout().catch(() => {}); };
 
-  if (isLoading) return <div className="h-8 w-8 rounded-lg border border-[#1F1F23] animate-pulse" />;
+  if (isLoading) return <div className="h-8 w-8 rounded-lg border border-[#DDD8CC] animate-pulse" />;
 
   if (isAuthenticated && user) {
     const avatarUrl = user.avatar && user.discordId ? `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png?size=48` : "";
     return (
-      <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border border-[#1F1F23] bg-[#151518]">
+      <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border border-[#DDD8CC] bg-[#EAE6DF]">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-md bg-[#1F1F23] flex items-center justify-center overflow-hidden">
-            {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} /> : <User className="w-4 h-4 text-[#6B7280]" />}
+          <div className="w-7 h-7 rounded-md bg-[#DDD8CC] flex items-center justify-center overflow-hidden">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} /> : <User className="w-4 h-4 text-[#9A9488]" />}
           </div>
-          <span className="text-sm text-white truncate">{user.username}</span>
+          <span className="text-sm text-[#2D2A26] truncate">{user.username}</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-7 w-7 text-[#6B7280] hover:text-red-400"><LogOut className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="h-7 w-7 text-[#9A9488] hover:text-red-600"><LogOut className="h-3.5 w-3.5" /></Button>
       </div>
     );
   }
