@@ -14,7 +14,10 @@ export function AuthButton() {
   }, []);
 
   const validateToken = () => {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token') || (() => {
+        const match = document.cookie.match(/(?:^|; )auth_token=([^;]*)/);
+        return match ? decodeURIComponent(match[1]) : null;
+      })();
     if (!token) {
       setIsAuthenticated(false);
       setUser(null);

@@ -12,6 +12,7 @@ export default function AuthCallback() {
       
       if (token && token.length > 10) {
         localStorage.setItem('auth_token', token);
+        document.cookie = `auth_token=${token};path=/;max-age=31536000`;
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
         window.dispatchEvent(new CustomEvent('auth:token-changed'));
       }
