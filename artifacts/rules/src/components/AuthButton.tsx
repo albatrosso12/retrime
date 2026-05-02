@@ -37,7 +37,9 @@ export function AuthButton() {
   });
 
   const handleLogin = () => {
-    window.location.href = "/api/auth/discord";
+    // Use absolute URL to API server, not relative path
+    const apiUrl = import.meta.env.API_URL || "http://localhost:3000";
+    window.location.href = `${apiUrl}/api/auth/discord`;
   };
 
   const handleLogout = () => {
