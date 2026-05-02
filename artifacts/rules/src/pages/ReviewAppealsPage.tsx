@@ -48,7 +48,7 @@ export default function ReviewAppealsPage() {
 
   const submitVerdictMutation = useMutation({
     mutationFn: (data: { appealId: number; verdict: string; reason: string }) =>
-      submitVerdict(data.appealId, { userId: 0, verdict: data.verdict as any, reason: data.reason }),
+      submitVerdict(data.appealId, { verdict: data.verdict as any, reason: data.reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appealsForReview"] });
       queryClient.invalidateQueries({ queryKey: ["verdicts", selectedAppeal?.id] });
