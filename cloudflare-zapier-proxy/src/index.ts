@@ -226,15 +226,39 @@ async function handleSubmitVerdict(request: Request, env: Env): Promise<Response
   const appealId = match[1];
 
   try {
+    // Get user from Authorization header
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return errorResponse('Not authenticated', 401);
+    }
+    const token = authHeader.substring(7);
+    const session = JSON.parse(atob(token));
+    
+    // Check if user is banned
+    const banned = await env.DB.prepare('SELECT * FROM banned_users WHERE discord_id = ?')
+      .bind(session.discordId)
+      .first();
+    if (banned) {
+      return errorResponse('You are banned from submitting verdicts', 403);
+    }
+
     const body = await request.json() as any;
-    const { userId, verdict, reason } = body;
+    const { verdict, reason } = body;
 
     if (!verdict) return errorResponse('Verdict is required', 400);
+
+    // Check if user already voted
+    const existingVote = await env.DB.prepare('SELECT * FROM verdicts WHERE appeal_id = ? AND user_id = ?')
+      .bind(appealId, session.userId)
+      .first();
+    if (existingVote) {
+      return errorResponse('You have already submitted a verdict for this appeal', 400);
+    }
 
     // Insert verdict
     await env.DB.prepare(
       'INSERT INTO verdicts (appeal_id, user_id, verdict, reason) VALUES (?, ?, ?, ?)'
-    ).bind(appealId, userId || 0, verdict, reason || null).run();
+    ).bind(appealId, session.userId, verdict, reason || null).run();
 
     // Count verdicts
     const { results: verdicts } = await env.DB.prepare('SELECT * FROM verdicts WHERE appeal_id = ?')
@@ -255,6 +279,14 @@ async function handleSubmitVerdict(request: Request, env: Env): Promise<Response
         .first();
 
       if (appeal) {
+        // Get all verdicts with user info
+        const { results: fullVerdicts } = await env.DB.prepare(`
+          SELECT v.*, u.username, u.discord_id 
+          FROM verdicts v 
+          JOIN users u ON v.user_id = u.id 
+          WHERE v.appeal_id = ?
+        `).bind(appealId).all();
+
         await fetch(env.ZAP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -266,7 +298,7 @@ async function handleSubmitVerdict(request: Request, env: Env): Promise<Response
             faction: appeal.faction,
             category: appeal.category,
             message: appeal.message,
-            verdicts: verdicts,
+            verdicts: fullVerdicts,
             verdictsCount,
             forwardedAt: new Date().toISOString(),
           }),
@@ -281,6 +313,10 @@ async function handleSubmitVerdict(request: Request, env: Env): Promise<Response
     return jsonResponse({ success: true, verdictsCount });
 
   } catch (err: any) {
+    // If error is about unique constraint, it means user already voted
+    if (err.message && err.message.includes('UNIQUE')) {
+      return errorResponse('You have already submitted a verdict for this appeal', 400);
+    }
     return errorResponse(`Failed to submit verdict: ${err.message}`, 500);
   }
 }

@@ -43,7 +43,20 @@ CREATE TABLE IF NOT EXISTS verdicts (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Unique constraint: one user can only verdict once per appeal
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_verdict ON verdicts(appeal_id, user_id);
+
+-- Banned users table (cannot open review)
+CREATE TABLE IF NOT EXISTS banned_users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  discord_id TEXT UNIQUE NOT NULL,
+  reason TEXT,
+  banned_by INTEGER REFERENCES users(id),
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_appeals_status ON appeals(status);
 CREATE INDEX IF NOT EXISTS idx_verdicts_appeal_id ON verdicts(appeal_id);
 CREATE INDEX IF NOT EXISTS idx_users_discord_id ON users(discord_id);
+CREATE INDEX IF NOT EXISTS idx_banned_discord_id ON banned_users(discord_id);
