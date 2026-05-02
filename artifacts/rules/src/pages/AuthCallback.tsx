@@ -5,20 +5,18 @@ export default function AuthCallback() {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    // Get token from URL hash (e.g., #token=...)
     const hash = window.location.hash;
     if (hash && hash.startsWith('#token=')) {
-      const token = hash.substring(7); // Remove '#token='
-      if (token) {
+      const tokenWithParams = hash.substring(7);
+      const token = tokenWithParams.split('&')[0].split('#')[0];
+      
+      if (token && token.length > 10) {
         localStorage.setItem('auth_token', token);
-        // Clean URL
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        // Notify AuthButton to re-validate
-        window.dispatchEvent(new CustomEvent('auth:token-changed'));
       }
     }
-    // Redirect to home page
-    navigate('/');
+    // Full page redirect to home
+    window.location.href = '/';
   }, [navigate]);
 
   return (

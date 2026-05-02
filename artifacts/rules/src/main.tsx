@@ -45,14 +45,4 @@ setAuthTokenGetter(() => {
   return localStorage.getItem('auth_token');
 });
 
-// Listen for unauthorized events (401) and redirect
-window.addEventListener('auth:unauthorized', () => {
-  localStorage.removeItem('auth_token');
-  // Dispatch custom event to notify components
-  window.dispatchEvent(new CustomEvent('auth:token-changed'));
-  if (window.location.pathname !== '/') {
-    window.location.href = '/';
-  }
-});
-
 createRoot(document.getElementById("root")!).render(<App />);
