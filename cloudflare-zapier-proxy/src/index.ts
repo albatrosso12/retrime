@@ -189,14 +189,47 @@ async function checkAndForwardToZapier(env: Env, appealId: number) {
 
   if (verdictsCount >= 5 && !alreadySent) {
     const verdicts = await env.DB
-      .prepare('SELECT verdict, reason FROM verdicts WHERE appeal_id = ? ORDER BY created_at')
+      .prepare(`
+        SELECT v.verdict, v.reason, v.created_at, u.username 
+        FROM verdicts v 
+        JOIN users u ON v.user_id = u.id 
+        WHERE v.appeal_id = ? 
+        ORDER BY v.created_at
+      `)
       .bind(appealId)
-      .all<{ verdict: string; reason: string | null }>();
+      .all<{ verdict: string; reason: string | null; created_at: string; username: string }>();
+
+    const verdictCounts = {
+      guilty: 0,
+      not_guilty: 0,
+      insufficient_evidence: 0,
+    };
+    
+    verdicts.results.forEach((v) => {
+      if (v.verdict === 'guilty') verdictCounts.guilty++;
+      else if (v.verdict === 'not_guilty') verdictCounts.not_guilty++;
+      else verdictCounts.insufficient_evidence++;
+    });
 
     const result = await sendToZapier(env, {
-      ...appealRow,
+      id: appealRow.id,
+      chat_id: appealRow.chat_id,
+      title: appealRow.title,
+      nickname: appealRow.nickname,
+      faction: appealRow.faction,
+      contact: appealRow.contact,
+      category: appealRow.category,
+      message: appealRow.message,
       type: 'verdict_threshold',
-      verdicts: verdicts.results,
+      verdict_count: verdictsCount,
+      verdict_summary: verdictCounts,
+      verdicts: verdicts.results.map(v => ({
+        verdict: v.verdict,
+        reason: v.reason,
+        username: v.username,
+        created_at: v.created_at,
+      })),
+      created_at: appealRow.created_at,
     });
 
     if (result.ok) {
