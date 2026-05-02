@@ -37,24 +37,9 @@ export function AuthButton() {
   });
 
   const handleLogin = () => {
-    // Direct Discord OAuth redirect using env variables (Vite requires VITE_ prefix)
-    const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
-    
-    if (clientId && redirectUri) {
-      // Construct Discord OAuth URL directly
-      const discordAuthUrl = new URL("https://discord.com/api/oauth2/authorize");
-      discordAuthUrl.searchParams.set("client_id", clientId);
-      discordAuthUrl.searchParams.set("redirect_uri", redirectUri);
-      discordAuthUrl.searchParams.set("response_type", "code");
-      discordAuthUrl.searchParams.set("scope", "identify email");
-      
-      window.location.href = discordAuthUrl.toString();
-    } else {
-      // Fallback to API server if env variables not set
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      window.location.href = `${apiUrl}/api/auth/discord`;
-    }
+    // Simply redirect to Worker's Discord auth route
+    const workerUrl = import.meta.env.VITE_API_URL || "https://retrime.korsetov2009.workers.dev";
+    window.location.href = `${workerUrl}/auth/discord`;
   };
 
   const handleLogout = () => {
